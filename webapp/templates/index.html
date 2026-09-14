@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PanoSpace - Spatial Transcriptomics Analysis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary sticky-top">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/">
+            <i class="bi bi-grid-3x3-gap me-2"></i>PanoSpace
+        </a>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-info" onclick="showFeatures()">
+                <i class="bi bi-grid"></i> Features
+            </button>
+            <button class="btn btn-sm btn-outline-warning" id="pipelineBtn" onclick="showPipeline()">
+                <i class="bi bi-diagram-3"></i> Pipeline
+            </button>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid py-3">
+    <div class="row g-3">
+
+        <div class="col-lg-3 col-md-4">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-header border-secondary">
+                    <i class="bi bi-upload me-1"></i> Upload
+                </div>
+                <div class="card-body">
+                    <div id="dropZone" class="drop-zone text-center p-4 border border-secondary border-dashed rounded">
+                        <i class="bi bi-cloud-arrow-up display-4 text-muted"></i>
+                        <p class="mt-2 text-muted small">Drop images or videos here</p>
+                        <p class="text-muted small">or click to browse</p>
+                        <input type="file" id="fileInput" multiple accept="image/*,video/*" hidden>
+                        <button class="btn btn-sm btn-primary mt-2" onclick="document.getElementById('fileInput').click()">
+                            Select Files
+                        </button>
+                    </div>
+                    <div id="uploadProgress" class="mt-2" style="display:none">
+                        <div class="progress" style="height:4px">
+                            <div class="progress-bar bg-success" style="width:0%"></div>
+                        </div>
+                        <small class="text-muted" id="uploadStatus"></small>
+                    </div>
+                    <div id="imageList" class="mt-3" style="max-height:400px;overflow-y:auto"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 col-md-8">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-image me-1"></i> Viewer</span>
+                    <div class="btn-group btn-group-sm" id="viewerControls" style="display:none">
+                        <button class="btn btn-outline-secondary" onclick="rotateImage(-90)" title="Rotate Left">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="rotateImage(0)" title="Reset">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="rotateImage(90)" title="Rotate Right">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                        <button class="btn btn-outline-info" onclick="zoomIn()" title="Zoom In">
+                            <i class="bi bi-zoom-in"></i>
+                        </button>
+                        <button class="btn btn-outline-info" onclick="zoomOut()" title="Zoom Out">
+                            <i class="bi bi-zoom-out"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center overflow-auto" id="viewerPane">
+                    <div id="viewerEmpty" class="text-center text-muted">
+                        <i class="bi bi-image display-1"></i>
+                        <p class="mt-3">Upload an image to start analysis</p>
+                    </div>
+                    <div id="imageContainer" style="display:none;position:relative;width:100%;height:100%">
+                        <img id="mainImage" class="img-fluid rounded" style="max-height:70vh;object-fit:contain;transition:transform 0.3s ease" draggable="false">
+                        <video id="mainVideo" controls style="display:none;max-height:70vh;width:100%;object-fit:contain"></video>
+                        <div id="regionOverlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none"></div>
+                        <canvas id="regionCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;cursor:crosshair"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary mt-3" id="pipelineCard" style="display:none">
+                <div class="card-header border-secondary">
+                    <i class="bi bi-diagram-3 me-1"></i> Analysis Pipeline
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2 justify-content-center" id="pipelineSteps"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-12">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header border-secondary">
+                    <i class="bi bi-tools me-1"></i> Tools
+                </div>
+                <div class="card-body" id="toolsPanel">
+                    <div id="noImageMsg" class="text-muted small text-center p-3">
+                        Select an image to see available tools
+                    </div>
+                    <div id="toolsContent" style="display:none">
+                        <div class="mb-2">
+                            <label class="form-label small text-muted">Enhancement</label>
+                            <div class="d-flex flex-wrap gap-1">
+                                <button class="btn btn-sm btn-outline-light" onclick="enhanceImage('auto_contrast')">Auto Contrast</button>
+                                <button class="btn btn-sm btn-outline-light" onclick="enhanceImage('denoise')">Denoise</button>
+                                <button class="btn btn-sm btn-outline-light" onclick="enhanceImage('sharpen')">Sharpen</button>
+                                <button class="btn btn-sm btn-outline-light" onclick="enhanceImage('equalize')">Equalize</button>
+                                <button class="btn btn-sm btn-outline-light" onclick="enhanceImage('grayscale')">Grayscale</button>
+                            </div>
+                        </div>
+                        <hr class="border-secondary">
+                        <div class="mb-2">
+                            <label class="form-label small text-muted">Quick Actions</label>
+                            <div class="d-flex flex-wrap gap-1">
+                                <button class="btn btn-sm btn-outline-success" onclick="runStep('detect')">
+                                    <i class="bi bi-cell"></i> Detect Cells
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" onclick="runStep('deconv')">
+                                    <i class="bi bi-layers"></i> Deconvolve
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning" onclick="runStep('annotate')">
+                                    <i class="bi bi-tags"></i> Annotate
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="runStep('predict')">
+                                    <i class="bi bi-graph-up"></i> Predict Genes
+                                </button>
+                            </div>
+                        </div>
+                        <hr class="border-secondary">
+                        <div class="mb-2">
+                            <label class="form-label small text-muted">Image Info</label>
+                            <div id="imageInfo" class="small"></div>
+                        </div>
+                        <hr class="border-secondary">
+                        <button class="btn btn-sm btn-outline-danger w-100" onclick="deleteCurrentImage()">
+                            <i class="bi bi-trash"></i> Delete Image
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary mt-3">
+                <div class="card-header border-secondary">
+                    <i class="bi bi-camera-video me-1"></i> Video Preview
+                </div>
+                <div class="card-body">
+                    <div id="videoList" class="text-muted small text-center p-2">
+                        No videos uploaded yet
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="modal fade" id="featuresModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title"><i class="bi bi-grid me-2"></i>PanoSpace Features</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="featuresList"></div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="toast" class="toast" role="alert">
+        <div class="toast-header bg-dark text-light border-secondary">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong class="me-auto" id="toastTitle">PanoSpace</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="toastBody"></div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

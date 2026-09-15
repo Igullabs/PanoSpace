@@ -193,6 +193,7 @@
 
   async function loadImage(item) {
     initThree();
+    panoStage.style.display = "block";
     const tex = new THREE.Texture(item.bitmap);
     tex.minFilter = THREE.LinearFilter;
     tex.magFilter = THREE.LinearFilter;
@@ -204,6 +205,7 @@
 
   async function loadVideo(item) {
     initThree();
+    panoStage.style.display = "block";
     const video = document.createElement("video");
     video.src = item.objectUrl;
     video.loop = true;

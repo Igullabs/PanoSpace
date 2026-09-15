@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>PanoSpace — Local 180° &amp; 360° Viewer</title>
+  <meta name="author" content="PanoSpace"/>
+  <meta name="description" content="Explore local panoramic images and videos in an immersive 180° or 360° browser viewer."/>
+  <meta property="og:title" content="PanoSpace — Local Panorama Viewer"/>
+  <meta property="og:description" content="Explore local panoramic images and videos in an immersive browser viewer."/>
+  <meta property="og:type" content="website"/>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    @font-face {
+      font-family: 'CameraPlainVariable';
+      src: url('https://cdn.gpteng.co/mcp-widgets/v1/fonts/CameraPlainVariable.woff2') format('woff2');
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+  </style>
+  <link rel="stylesheet" href="styles.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-lockup">
+        <span class="brand-mark"><span></span><span></span><span></span></span>
+        <span class="brand-name">PANO<span>SPACE</span></span>
+        <span class="brand-divider"></span>
+        <span class="brand-context">LOCAL VIEWER</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="button button--primary" type="button" id="uploadBtn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="m17 8-5-5-5 5"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path></svg>
+          <span>Upload media</span>
+        </button>
+        <label class="projection-select projection-select--compact">
+          <span>Projection</span>
+          <span class="projection-select__control">
+            <select id="projectionSelect" aria-label="Projection mode">
+              <option value="auto" selected>Auto</option>
+              <option value="360">360°</option>
+              <option value="180">180°</option>
+            </select>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+          </span>
+        </label>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="library-drawer">
+        <div class="library-panel">
+          <div class="library-panel__heading">
+            <div>
+              <p class="eyebrow">Media library</p>
+              <h2>Library</h2>
+            </div>
+            <span class="media-count" id="mediaCount">00</span>
+          </div>
+
+          <div class="upload-zone" id="dropZone" tabindex="0" role="button" aria-label="Upload media">
+            <span class="upload-zone__icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="m17 8-5-5-5 5"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path></svg>
+            </span>
+            <div class="upload-zone__main">
+              <strong class="upload-zone__title">Drop media here</strong>
+              <span class="upload-zone__sub">or browse from your computer</span>
+              <span class="upload-zone__formats">JPG · PNG · WEBP · MP4 · WEBM · MOV</span>
+            </div>
+            <button class="button button--secondary button--small" type="button" id="browseBtn">Browse files</button>
+          </div>
+
+          <div class="media-list" id="mediaList"></div>
+
+          <div class="library-panel__footer">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <span>Files stay on this device</span>
+          </div>
+        </div>
+      </aside>
+
+      <section class="viewer-panel">
+        <div class="viewer-topline">
+          <div class="viewer-title">
+            <h1 id="viewerTitle">Choose a panorama<br>to start exploring</h1>
+            <span class="media-badge" id="mediaBadge" style="display:none"></span>
+          </div>
+          <div class="viewer-meta" id="viewerMeta"></div>
+        </div>
+
+        <div class="viewer-stage" id="viewerStage">
+          <div class="empty-viewer" id="emptyViewer">
+            <div class="empty-viewer-art">
+              <span class="empty-viewer-art__ring"></span>
+              <span class="empty-viewer-art__ring empty-viewer-art__ring--two"></span>
+              <span class="empty-viewer-art__dot"></span>
+            </div>
+            <p>Your immersive workspace is waiting for a local image or video.</p>
+            <div class="empty-viewer-key"><span>DRAG</span><span>SCROLL</span><span>LOOK</span></div>
+          </div>
+
+          <div class="viewer-loading" id="viewerLoading">
+            <svg class="spin" xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
+            <span>preparing panorama…</span>
+          </div>
+
+          <div id="panoStage" style="position:absolute;inset:0;display:none"></div>
+
+          <div class="viewer-corner-label" id="cornerLabel" style="display:none">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg>
+            <span id="cornerText">360°</span>
+          </div>
+
+          <div class="viewer-controls" id="viewerControls" style="display:none">
+            <button class="control-button control-button--play" type="button" id="playPause" aria-label="Play / pause">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
+            </button>
+            <span class="control-time" id="timeDisplay">00:00</span>
+            <span style="flex:1"></span>
+            <span class="control-grip" id="controlsHint">DRAG to look · SCROLL to zoom</span>
+          </div>
+        </div>
+
+        <div class="viewer-bottomline">
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+            <span id="bottomInfo">PanoSpace · Local Viewer</span>
+          </span>
+          <span>180° / 360° equirectangular</span>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/ogg,video/quicktime,.jpg,.jpeg,.png,.webp,.gif,.mp4,.webm,.ogg,.mov" hidden/>
+  <script src="app.js"></script>
+</body>
+</html>

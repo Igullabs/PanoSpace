@@ -59,43 +59,48 @@ PanoSpace is a Python package designed for single-cell level analysis and visual
 
 ## Web Application
 
-PanoSpace includes a **fast, interactive web application** for image upload, analysis pipeline execution, and real-time visualization.
+PanoSpace includes a **client-side Local Panorama Viewer** — a fast, 100% in-browser 360°/180° panorama explorer. No data ever leaves your device.
+
+**Live demo:** <https://pano-space.vercel.app>
 
 ### Features
 
 | Feature | Description |
 |---------|-------------|
-| **Drag & Drop Upload** | Upload images/videos via drag-and-drop or file picker |
-| **Optimized Image Loading** | Lazy loading, WebP thumbnails, and async processing |
-| **Fast Rotation** | Hardware-accelerated image rotation with server-side caching |
-| **Interactive Buttons** | Click-to-analyze buttons on uploaded images for pipeline steps |
-| **Instant Navigation** | One-click redirect between analysis pipeline stages |
-| **Video Preview** | Upload and play video timelapses of analysis results |
-| **Image Enhancement** | Auto-contrast, denoise, sharpen, equalize, grayscale |
-| **Pipeline Visualization** | Visual 7-step pipeline with real-time progress |
-| **Batch Processing** | Upload and process multiple images simultaneously |
-| **Region Selection** | Draw regions of interest for targeted analysis |
-| **Keyboard Shortcuts** | Arrow keys for rotation, +/- for zoom, F for features |
-| **Dark Mode UI** | Professional dark theme optimized for microscopy |
+| **360° / 180° Projection** | Auto-detect or manually switch projection per panorama |
+| **Drag to Look** | Pointer / mouse drag rotates the view in any direction |
+| **Scroll to Zoom** | Smooth field-of-view zoom (20°–90°) |
+| **Video Panoramas** | Play/pause MP4, WebM, MOV; seek bar with timestamps |
+| **Client-Side Downscaling** | Large images are downscaled locally via `createImageBitmap` + `OffscreenCanvas` for instant loading |
+| **Media Library** | Drawer inventory of all added panoramas with thumbnails, sizes and counts |
+| **Drag & Drop Upload** | Drop files anywhere, or use the file picker |
+| **Truly Local** | Files stay on your device — nothing is uploaded to a server |
+| **Dark UI** | Pixel-perfect match of the PanoSpace "Local Viewer" design |
 
 ### Launch Web App
 
+Open <https://pano-space.vercel.app> — or run locally:
+
 ```bash
 cd webapp
-pip install -r requirements.txt
-python app.py
-# Open http://localhost:5000
+python -m http.server 8080
+# Open http://localhost:8080
 ```
+
+No build step, no dependencies to install; `index.html` loads Three.js from CDN.
+
+### Supported Formats
+
+`JPG · PNG · WEBP · GIF · MP4 · WEBM · MOV`
 
 ### Keyboard Shortcuts
 
 | Key | Action |
 |-----|--------|
-| `←` `→` | Rotate image 90 degrees |
+| `←` `→` | Pan left / right |
+| `↑` `↓` | Pan up / down |
 | `+` / `-` | Zoom in / out |
-| `0` | Reset rotation and zoom |
-| `F` | Open features panel |
-| `Delete` | Delete current image |
+| `Space` | Play / pause video |
 
 ---
 

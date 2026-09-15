@@ -2,6 +2,7 @@ import os
 import uuid
 import hashlib
 import time
+import tempfile
 from io import BytesIO
 from functools import lru_cache
 from concurrent.futures import ThreadPoolExecutor
@@ -14,9 +15,16 @@ import numpy as np
 app = Flask(__name__)
 CORS(app)
 
-UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
-THUMB_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'thumbs')
-CACHE_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'cache')
+IS_VERCEL = bool(os.environ.get("VERCEL") == "1" or os.environ.get("VERCEL_REGION") or os.environ.get("NOW_REGION"))
+
+if IS_VERCEL:
+    BASE_DIR = os.path.join(tempfile.gettempdir(), "panospace")
+else:
+    BASE_DIR = os.path.dirname(__file__)
+
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
+THUMB_FOLDER = os.path.join(BASE_DIR, 'static', 'thumbs')
+CACHE_FOLDER = os.path.join(BASE_DIR, 'static', 'cache')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(THUMB_FOLDER, exist_ok=True)
 os.makedirs(CACHE_FOLDER, exist_ok=True)
